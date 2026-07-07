@@ -293,6 +293,7 @@ export default function DashboardPage() {
           transactionCount={transactions.length}
           daysInMonth={daysInMonth}
           currentDay={currentDay}
+          month={month}
           cards={cards}
           weeklySpent={weeklySpent}
           onAddCard={handleAddCard}

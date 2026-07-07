@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getMonthTheme } from "@/lib/month-colors";
 
 interface MonthFilterProps {
   month: number;
@@ -40,6 +41,8 @@ export function MonthFilter({ month, year, onChange }: MonthFilterProps) {
   const isCurrentMonth =
     month === new Date().getMonth() + 1 && year === new Date().getFullYear();
 
+  const theme = getMonthTheme(month);
+
   return (
     <div className="flex items-center gap-1">
       <button
@@ -48,7 +51,11 @@ export function MonthFilter({ month, year, onChange }: MonthFilterProps) {
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
-      <div className="flex items-center gap-1.5 rounded-xl bg-zinc-100 px-4 py-2 dark:bg-zinc-800">
+      <div className="flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 dark:bg-zinc-800">
+        <div
+          className="h-2.5 w-2.5 rounded-full transition-colors duration-300"
+          style={{ backgroundColor: theme.color }}
+        />
         <span className="text-sm font-bold text-zinc-900 dark:text-white">
           {MONTH_NAMES[month - 1]}
         </span>

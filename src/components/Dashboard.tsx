@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StatCard } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
+import { getMonthTheme } from "@/lib/month-colors";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,7 @@ interface DashboardProps {
   transactionCount: number;
   daysInMonth: number;
   currentDay: number;
+  month: number;
   cards: CardItem[];
   weeklySpent: number;
   onAddCard: (name: string, invoiceAmount: number) => void;
@@ -45,6 +47,7 @@ export function Dashboard({
   transactionCount,
   daysInMonth,
   currentDay,
+  month,
   cards,
   weeklySpent,
   onAddCard,
@@ -90,10 +93,15 @@ export function Dashboard({
     }
   };
 
+  const monthTheme = getMonthTheme(month);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero card with circular progress */}
-      <div className="relative overflow-hidden rounded-3xl gradient-primary p-6 sm:p-8 shadow-xl shadow-indigo-500/20">
+      <div
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl"
+        style={{ background: monthTheme.gradient, boxShadow: `0 20px 40px -12px ${monthTheme.color}30` }}
+      >
         <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
 

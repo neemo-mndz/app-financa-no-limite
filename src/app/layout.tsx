@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   title: "Financa no Limite - Controle Financeiro Premium",
   description:
     "Controle seus gastos, defina limites e acompanhe sua projecao de fatura em tempo real.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -22,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
