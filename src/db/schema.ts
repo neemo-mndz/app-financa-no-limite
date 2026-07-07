@@ -41,6 +41,8 @@ export const cards = pgTable("cards", {
   userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   invoiceAmount: numeric("invoice_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -41,7 +41,7 @@ export default function DashboardPage() {
         fetch(`/api/transactions?month=${month}&year=${year}`),
         fetch("/api/categories"),
         fetch("/api/settings"),
-        fetch("/api/cards"),
+        fetch(`/api/cards?month=${month}&year=${year}`),
       ]);
 
       if (transRes.ok) setTransactions(await transRes.json());
@@ -121,14 +121,14 @@ export default function DashboardPage() {
 
   const handleAddCard = async (name: string, invoiceAmount: number) => {
     const res = await fetch("/api/cards", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, invoiceAmount }),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, invoiceAmount, month, year }),
     });
     if (res.ok) await fetchData();
   };
 
   const handleUpdateCard = async (id: string, name: string, invoiceAmount: number) => {
     const res = await fetch("/api/cards", {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, invoiceAmount }),
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, invoiceAmount, month, year }),
     });
     if (res.ok) await fetchData();
   };
