@@ -88,10 +88,10 @@ export default function DashboardPage() {
     }
   };
 
-  const handleEditTransaction = async (id: string, description: string, amount: number, categoryId: string | null) => {
+  const handleEditTransaction = async (id: string, description: string, amount: number, categoryId: string | null, date: string | null) => {
     const res = await fetch("/api/transactions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, description, amount, categoryId, month, year }),
+      body: JSON.stringify({ id, description, amount, categoryId, month, year, date }),
     });
     if (res.ok) await fetchData();
   };
@@ -335,6 +335,7 @@ export default function DashboardPage() {
               month={month}
               year={year}
               onDelete={handleDeleteTransaction}
+              onEdit={handleEditTransaction}
             />
             <CategoryManager
               categories={categories}

@@ -8,14 +8,14 @@ import { Select } from "@/components/ui/Select";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getCategoryEmoji } from "@/lib/category-icons";
-import { Trash2, FileDown, FileText, Pencil, X, Check } from "lucide-react";
+import { Trash2, FileDown, FileText, Pencil, X, Check, Calendar } from "lucide-react";
 import type { Transaction, Category } from "@/db/schema";
 
 interface TransactionListProps {
   transactions: Transaction[];
   categories: Category[];
   onDelete: (id: string) => void;
-  onEdit: (id: string, description: string, amount: number, categoryId: string | null) => void;
+  onEdit: (id: string, description: string, amount: number, categoryId: string | null, date: string | null) => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
 }
@@ -28,32 +28,38 @@ export function TransactionList({
   onExportCSV,
   onExportPDF,
 }: TransactionListProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editAmountCents, setEditAmountCents] = useState(0);
   const [editCategoryId, setEditCategoryId] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const getCategoryById = (id: string | null) => {
     if (!id) return null;
     return categories.find((c) => c.id === id);
   };
 
-  const startEdit = (t: Transaction) => {
-    setEditingId(t.id);
+  const openEditModal = (t: Transaction) => {
+    setEditingTransaction(t);
     setEditDesc(t.description);
     setEditAmountCents(Math.round(Number(t.amount) * 100));
     setEditCategoryId(t.categoryId || "");
+    // Format date for input type="date"
+    const d = new Date(t.createdAt);
+    setEditDate(d.toISOString().split("T")[0]);
   };
 
   const saveEdit = () => {
-    if (editingId && editDesc.trim() && editAmountCents > 0) {
-      onEdit(editingId, editDesc.trim(), editAmountCents / 100, editCategoryId || null);
-      setEditingId(null);
+    if (editingTransaction && editDesc.trim() && editAmountCents > 0) {
+      onEdit(
+        editingTransaction.id,
+        editDesc.trim(),
+        editAmountCents / 100,
+        editCategoryId || null,
+        editDate || null
+      );
+      setEditingTransaction(null);
     }
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
   };
 
   return (
@@ -89,49 +95,6 @@ export function TransactionList({
         <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
           {transactions.map((t, idx) => {
             const category = getCategoryById(t.categoryId);
-            const isEditing = editingId === t.id;
-
-            if (isEditing) {
-              return (
-                <div
-                  key={t.id}
-                  className="rounded-xl border border-indigo-200/50 bg-indigo-50/30 p-3 dark:border-indigo-800/30 dark:bg-indigo-950/20 animate-fade-in"
-                >
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-12">
-                    <div className="sm:col-span-4">
-                      <Input
-                        value={editDesc}
-                        onChange={(e) => setEditDesc(e.target.value)}
-                        placeholder="Descricao"
-                        onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <CurrencyInput
-                        value={editAmountCents}
-                        onChange={setEditAmountCents}
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <Select
-                        value={editCategoryId}
-                        onChange={(e) => setEditCategoryId(e.target.value)}
-                        placeholder="Categoria"
-                        options={categories.map((c) => ({ value: c.id, label: c.name }))}
-                      />
-                    </div>
-                    <div className="sm:col-span-2 flex gap-1.5">
-                      <Button size="sm" onClick={saveEdit} className="flex-1 h-11">
-                        <Check className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={cancelEdit} className="h-11">
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
 
             return (
               <div
@@ -172,19 +135,19 @@ export function TransactionList({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums mr-1">
                     -{formatCurrency(Number(t.amount))}
                   </span>
                   <button
-                    onClick={() => startEdit(t)}
-                    className="rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                    onClick={() => openEditModal(t)}
+                    className="rounded-lg p-1.5 text-zinc-400 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => onDelete(t.id)}
-                    className="rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+                    className="rounded-lg p-1.5 text-zinc-400 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 dark:hover:text-red-400"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -192,6 +155,82 @@ export function TransactionList({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditingTransaction(null)} />
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 animate-slide-up">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
+                  Editar Gasto
+                </h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Altere as informacoes abaixo
+                </p>
+              </div>
+              <button onClick={() => setEditingTransaction(null)} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                label="Descricao"
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="O que voce gastou?"
+              />
+              <CurrencyInput
+                label="Valor"
+                value={editAmountCents}
+                onChange={setEditAmountCents}
+              />
+              <Select
+                label="Categoria"
+                value={editCategoryId}
+                onChange={(e) => setEditCategoryId(e.target.value)}
+                placeholder="Sem categoria"
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-zinc-200/80 bg-zinc-50 px-4 text-sm text-zinc-900 transition-all duration-200 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700/80 dark:bg-zinc-800/50 dark:text-zinc-100 dark:focus:border-indigo-500 dark:focus:bg-zinc-800 dark:focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={saveEdit} variant="gradient" className="flex-1">
+                  <Check className="h-4 w-4" />
+                  Salvar
+                </Button>
+                <Button variant="secondary" onClick={() => setEditingTransaction(null)} className="flex-1">
+                  Cancelar
+                </Button>
+              </div>
+
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => { onDelete(editingTransaction.id); setEditingTransaction(null); }}
+                  className="w-full"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir este gasto
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </Card>

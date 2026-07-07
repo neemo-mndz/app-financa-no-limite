@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { formatCurrency } from "@/lib/utils";
 import { getCategoryEmoji } from "@/lib/category-icons";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Pencil, Check } from "lucide-react";
 import type { Transaction, Category } from "@/db/schema";
 
 interface CalendarProps {
@@ -13,15 +17,20 @@ interface CalendarProps {
   month: number;
   year: number;
   onDelete: (id: string) => void;
+  onEdit: (id: string, description: string, amount: number, categoryId: string | null, date: string | null) => void;
 }
 
-export function Calendar({ transactions, categories, month, year, onDelete }: CalendarProps) {
+export function Calendar({ transactions, categories, month, year, onDelete, onEdit }: CalendarProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editAmountCents, setEditAmountCents] = useState(0);
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const daysInMonth = new Date(year, month, 0).getDate();
-  const firstDayOfWeek = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
 
-  // Group transactions by day
   const spendingByDay: Record<number, number> = {};
   const transactionsByDay: Record<number, Transaction[]> = {};
 
@@ -32,7 +41,6 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
     transactionsByDay[day].push(t);
   });
 
-  // Find max spending for heat intensity
   const maxSpending = Math.max(...Object.values(spendingByDay), 1);
 
   const today = new Date();
@@ -41,11 +49,9 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
 
   const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
-  // Build calendar grid
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  // Pad end
   while (cells.length % 7 !== 0) cells.push(null);
 
   const getHeatColor = (amount: number): string => {
@@ -59,11 +65,32 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
   const selectedTransactions = selectedDay ? transactionsByDay[selectedDay] || [] : [];
   const selectedTotal = selectedTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
 
+  const openEditModal = (t: Transaction) => {
+    setEditingTransaction(t);
+    setEditDesc(t.description);
+    setEditAmountCents(Math.round(Number(t.amount) * 100));
+    setEditCategoryId(t.categoryId || "");
+    const d = new Date(t.createdAt);
+    setEditDate(d.toISOString().split("T")[0]);
+  };
+
+  const saveEdit = () => {
+    if (editingTransaction && editDesc.trim() && editAmountCents > 0) {
+      onEdit(
+        editingTransaction.id,
+        editDesc.trim(),
+        editAmountCents / 100,
+        editCategoryId || null,
+        editDate || null
+      );
+      setEditingTransaction(null);
+    }
+  };
+
   return (
     <Card className="animate-fade-in">
       <CardHeader title="Calendario" subtitle="Gastos por dia" />
 
-      {/* Day names header */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {dayNames.map((name) => (
           <div key={name} className="text-center text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-600 py-1">
@@ -72,12 +99,9 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1">
         {cells.map((day, idx) => {
-          if (day === null) {
-            return <div key={`empty-${idx}`} className="aspect-square" />;
-          }
+          if (day === null) return <div key={`empty-${idx}`} className="aspect-square" />;
 
           const spending = spendingByDay[day] || 0;
           const isToday = day === currentDay;
@@ -107,7 +131,6 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
         })}
       </div>
 
-      {/* Legend */}
       <div className="flex items-center gap-3 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded bg-indigo-50 dark:bg-indigo-950/20 border border-zinc-200 dark:border-zinc-700" />
@@ -124,7 +147,7 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
       </div>
 
       {/* Day detail popup */}
-      {selectedDay !== null && (
+      {selectedDay !== null && !editingTransaction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedDay(null)} />
           <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl dark:bg-zinc-900 animate-slide-up">
@@ -166,13 +189,19 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                           {formatCurrency(Number(t.amount))}
                         </span>
                         <button
-                          onClick={() => { onDelete(t.id); }}
-                          className="rounded-lg p-1 text-zinc-300 hover:bg-red-50 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-red-950"
+                          onClick={() => openEditModal(t)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-700"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(t.id)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -182,6 +211,76 @@ export function Calendar({ transactions, categories, month, year, onDelete }: Ca
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingTransaction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditingTransaction(null)} />
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 animate-slide-up">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Editar Gasto</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Altere as informacoes abaixo</p>
+              </div>
+              <button onClick={() => setEditingTransaction(null)} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                label="Descricao"
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="O que voce gastou?"
+              />
+              <CurrencyInput
+                label="Valor"
+                value={editAmountCents}
+                onChange={setEditAmountCents}
+              />
+              <Select
+                label="Categoria"
+                value={editCategoryId}
+                onChange={(e) => setEditCategoryId(e.target.value)}
+                placeholder="Sem categoria"
+                options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Data</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="flex h-11 w-full rounded-xl border border-zinc-200/80 bg-zinc-50 px-4 text-sm text-zinc-900 transition-all duration-200 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700/80 dark:bg-zinc-800/50 dark:text-zinc-100 dark:focus:border-indigo-500 dark:focus:bg-zinc-800 dark:focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={saveEdit} variant="gradient" className="flex-1">
+                  <Check className="h-4 w-4" />
+                  Salvar
+                </Button>
+                <Button variant="secondary" onClick={() => setEditingTransaction(null)} className="flex-1">
+                  Cancelar
+                </Button>
+              </div>
+
+              <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => { onDelete(editingTransaction.id); setEditingTransaction(null); setSelectedDay(null); }}
+                  className="w-full"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Excluir este gasto
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { id, ...data } = body;
+  const { id, date, ...data } = body;
 
   if (!id) {
     return NextResponse.json({ error: "ID required" }, { status: 400 });
@@ -112,13 +112,24 @@ export async function PUT(request: NextRequest) {
     categoryId = parsed.data.categoryId;
   }
 
+  // Build update object
+  const updateData: Record<string, unknown> = {
+    description: parsed.data.description,
+    amount: parsed.data.amount.toString(),
+    categoryId,
+  };
+
+  // If date is provided, update createdAt and month/year
+  if (date) {
+    const newDate = new Date(date);
+    updateData.createdAt = newDate;
+    updateData.month = newDate.getMonth() + 1;
+    updateData.year = newDate.getFullYear();
+  }
+
   const result = await db
     .update(transactions)
-    .set({
-      description: parsed.data.description,
-      amount: parsed.data.amount.toString(),
-      categoryId,
-    })
+    .set(updateData)
     .where(and(eq(transactions.id, id), eq(transactions.userId, session.userId)))
     .returning();
 
