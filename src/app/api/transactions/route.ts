@@ -48,13 +48,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Sanitize categoryId
+  let categoryId: string | null = null;
+  if (parsed.data.categoryId && typeof parsed.data.categoryId === "string" && parsed.data.categoryId.length > 0) {
+    categoryId = parsed.data.categoryId;
+  }
+
   const result = await db
     .insert(transactions)
     .values({
       userId: session.userId,
       description: parsed.data.description,
       amount: parsed.data.amount.toString(),
-      categoryId: parsed.data.categoryId || null,
+      categoryId,
       month: parsed.data.month,
       year: parsed.data.year,
     })

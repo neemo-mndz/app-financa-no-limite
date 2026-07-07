@@ -82,31 +82,33 @@ export default function DashboardPage() {
     const res = await fetch("/api/transactions", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
     });
-    if (res.ok) fetchData();
+    if (res.ok) {
+      await fetchData();
+    }
   };
 
   const handleDeleteTransaction = async (id: string) => {
     const res = await fetch(`/api/transactions?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleAddCategory = async (name: string, color: string) => {
     const res = await fetch("/api/categories", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, color }),
     });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleUpdateCategory = async (id: string, name: string, color: string) => {
     const res = await fetch("/api/categories", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, color }),
     });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleDeleteCategory = async (id: string) => {
     const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleUpdateLimit = async (limit: number) => {
@@ -116,24 +118,23 @@ export default function DashboardPage() {
     if (res.ok) setMonthlyLimit(limit);
   };
 
-  // Cards
   const handleAddCard = async (name: string, invoiceAmount: number) => {
     const res = await fetch("/api/cards", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, invoiceAmount }),
     });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleUpdateCard = async (id: string, name: string, invoiceAmount: number) => {
     const res = await fetch("/api/cards", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, invoiceAmount }),
     });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleDeleteCard = async (id: string) => {
     const res = await fetch(`/api/cards?id=${id}`, { method: "DELETE" });
-    if (res.ok) fetchData();
+    if (res.ok) await fetchData();
   };
 
   const handleExportCSV = () => {
@@ -164,8 +165,8 @@ export default function DashboardPage() {
     ];
     const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
     const remaining = monthlyLimit - totalSpent;
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const dailyLimit = monthlyLimit / daysInMonth;
+    const dIM = new Date(year, month, 0).getDate();
+    const dailyLimit = monthlyLimit / dIM;
 
     doc.setFontSize(22);
     doc.setTextColor(99, 102, 241);
@@ -175,7 +176,6 @@ export default function DashboardPage() {
     doc.text(`${monthNames[month - 1]} ${year} | ${userEmail}`, 14, 30);
     doc.setDrawColor(230);
     doc.line(14, 34, 196, 34);
-
     doc.setFontSize(11);
     doc.setTextColor(40);
     doc.text("Resumo", 14, 42);
@@ -188,12 +188,7 @@ export default function DashboardPage() {
 
     const tableData = transactions.map((t) => {
       const category = categories.find((c) => c.id === t.categoryId);
-      return [
-        t.description,
-        category?.name || "-",
-        formatCurrency(Number(t.amount)),
-        new Date(t.createdAt).toLocaleDateString("pt-BR"),
-      ];
+      return [t.description, category?.name || "-", formatCurrency(Number(t.amount)), new Date(t.createdAt).toLocaleDateString("pt-BR")];
     });
 
     autoTable(doc, {
@@ -247,9 +242,7 @@ export default function DashboardPage() {
               <Wallet className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-sm font-bold text-zinc-900 dark:text-white leading-none">
-                Financa no Limite
-              </h1>
+              <h1 className="text-sm font-bold text-zinc-900 dark:text-white leading-none">Financa no Limite</h1>
               <p className="text-[11px] text-zinc-400 mt-0.5">{userEmail}</p>
             </div>
           </div>
@@ -258,10 +251,7 @@ export default function DashboardPage() {
             <div className="ml-2 flex items-center gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
               <ThemeToggle />
               <SettingsModal currentLimit={monthlyLimit} onSave={handleUpdateLimit} />
-              <button
-                onClick={handleLogout}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-              >
+              <button onClick={handleLogout} className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
@@ -271,6 +261,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="relative mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
+        {/* Dashboard: Hero + Form + Stats */}
         <Dashboard
           limit={monthlyLimit}
           totalSpent={totalSpent}
@@ -281,15 +272,17 @@ export default function DashboardPage() {
           onAddCard={handleAddCard}
           onUpdateCard={handleUpdateCard}
           onDeleteCard={handleDeleteCard}
-        />
+        >
+          {/* Transaction Form embedded between hero and stat cards */}
+          <TransactionForm
+            categories={categories}
+            month={month}
+            year={year}
+            onSubmit={handleAddTransaction}
+          />
+        </Dashboard>
 
-        <TransactionForm
-          categories={categories}
-          month={month}
-          year={year}
-          onSubmit={handleAddTransaction}
-        />
-
+        {/* Content Grid */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <TransactionList

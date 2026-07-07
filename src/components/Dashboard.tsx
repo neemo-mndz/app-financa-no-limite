@@ -34,6 +34,7 @@ interface DashboardProps {
   onAddCard: (name: string, invoiceAmount: number) => void;
   onUpdateCard: (id: string, name: string, invoiceAmount: number) => void;
   onDeleteCard: (id: string) => void;
+  children?: React.ReactNode;
 }
 
 export function Dashboard({
@@ -46,6 +47,7 @@ export function Dashboard({
   onAddCard,
   onUpdateCard,
   onDeleteCard,
+  children,
 }: DashboardProps) {
   const [showCardModal, setShowCardModal] = useState(false);
   const [newCardName, setNewCardName] = useState("");
@@ -128,6 +130,9 @@ export function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* Transaction Form slot */}
+      {children}
 
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
