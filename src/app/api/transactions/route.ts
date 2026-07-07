@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { transactions } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 import { transactionSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,7 +20,7 @@ export async function GET(request: NextRequest) {
     .from(transactions)
     .where(
       and(
-        eq(transactions.userId, user.id),
+        eq(transactions.userId, session.userId),
         eq(transactions.month, month),
         eq(transactions.year, year)
       )
@@ -33,10 +31,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -53,7 +49,7 @@ export async function POST(request: NextRequest) {
   const result = await db
     .insert(transactions)
     .values({
-      userId: user.id,
+      userId: session.userId,
       description: parsed.data.description,
       amount: parsed.data.amount.toString(),
       categoryId: parsed.data.categoryId || null,
@@ -66,10 +62,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -82,7 +76,7 @@ export async function DELETE(request: NextRequest) {
 
   await db
     .delete(transactions)
-    .where(and(eq(transactions.id, id), eq(transactions.userId, user.id)));
+    .where(and(eq(transactions.id, id), eq(transactions.userId, session.userId)));
 
   return NextResponse.json({ success: true });
 }

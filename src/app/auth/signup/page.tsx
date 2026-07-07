@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Wallet } from "lucide-react";
@@ -13,7 +12,6 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -34,45 +32,28 @@ export default function SignupPage() {
       return;
     }
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      setSuccess(true);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(typeof data.error === "string" ? data.error : "Erro ao criar conta");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Erro de conexão");
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-        <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600">
-            <Wallet className="h-6 w-6 text-white" />
-          </div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
-            Verifique seu e-mail
-          </h2>
-          <p className="mt-2 text-sm text-zinc-500">
-            Enviamos um link de confirmação para <strong>{email}</strong>
-          </p>
-          <Button
-            variant="secondary"
-            className="mt-6"
-            onClick={() => router.push("/auth/login")}
-          >
-            Voltar para Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">

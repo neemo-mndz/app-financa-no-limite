@@ -2,30 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { categories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 import { categorySchema } from "@/lib/validations";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const result = await db
     .select()
     .from(categories)
-    .where(eq(categories.userId, user.id));
+    .where(eq(categories.userId, session.userId));
 
   return NextResponse.json(result);
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -42,7 +38,7 @@ export async function POST(request: NextRequest) {
   const result = await db
     .insert(categories)
     .values({
-      userId: user.id,
+      userId: session.userId,
       name: parsed.data.name,
       color: parsed.data.color,
       icon: parsed.data.icon,
@@ -53,10 +49,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -83,17 +77,15 @@ export async function PUT(request: NextRequest) {
       color: parsed.data.color,
       icon: parsed.data.icon,
     })
-    .where(and(eq(categories.id, id), eq(categories.userId, user.id)))
+    .where(and(eq(categories.id, id), eq(categories.userId, session.userId)))
     .returning();
 
   return NextResponse.json(result[0]);
 }
 
 export async function DELETE(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -106,7 +98,7 @@ export async function DELETE(request: NextRequest) {
 
   await db
     .delete(categories)
-    .where(and(eq(categories.id, id), eq(categories.userId, user.id)));
+    .where(and(eq(categories.id, id), eq(categories.userId, session.userId)));
 
   return NextResponse.json({ success: true });
 }

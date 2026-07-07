@@ -2,28 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { userSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 import { settingsSchema } from "@/lib/validations";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const result = await db
     .select()
     .from(userSettings)
-    .where(eq(userSettings.userId, user.id));
+    .where(eq(userSettings.userId, session.userId));
 
   if (result.length === 0) {
-    // Create default settings
     const newSettings = await db
       .insert(userSettings)
       .values({
-        userId: user.id,
+        userId: session.userId,
         monthlyLimit: "5000",
       })
       .returning();
@@ -34,10 +31,8 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  const session = await getSession();
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,13 +49,13 @@ export async function PUT(request: NextRequest) {
   const existing = await db
     .select()
     .from(userSettings)
-    .where(eq(userSettings.userId, user.id));
+    .where(eq(userSettings.userId, session.userId));
 
   if (existing.length === 0) {
     const result = await db
       .insert(userSettings)
       .values({
-        userId: user.id,
+        userId: session.userId,
         monthlyLimit: parsed.data.monthlyLimit.toString(),
       })
       .returning();
@@ -73,7 +68,7 @@ export async function PUT(request: NextRequest) {
       monthlyLimit: parsed.data.monthlyLimit.toString(),
       updatedAt: new Date(),
     })
-    .where(eq(userSettings.userId, user.id))
+    .where(eq(userSettings.userId, session.userId))
     .returning();
 
   return NextResponse.json(result[0]);

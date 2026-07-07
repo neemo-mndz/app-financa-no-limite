@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Dashboard } from "@/components/Dashboard";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
@@ -55,21 +54,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth/login");
-      } else {
-        setUserEmail(user.email || "");
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) {
+          router.push("/auth/login");
+          return;
+        }
+        const data = await res.json();
+        setUserEmail(data.user.email);
         fetchData();
+      } catch {
+        router.push("/auth/login");
       }
     };
     checkUser();
   }, [fetchData, router]);
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/auth/login");
     router.refresh();
   };
