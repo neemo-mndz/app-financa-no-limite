@@ -2,7 +2,13 @@
 
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getMonthTheme } from "@/lib/month-colors";
+
+// Cores simples para diferenciar meses no filtro
+const MONTH_COLORS = [
+  "#6366f1", "#ec4899", "#10b981", "#f59e0b",
+  "#8b5cf6", "#06b6d4", "#3b82f6", "#ef4444",
+  "#14b8a6", "#f97316", "#a855f7", "#22c55e",
+];
 
 interface MonthFilterProps {
   month: number;
@@ -41,7 +47,7 @@ export function MonthFilter({ month, year, onChange }: MonthFilterProps) {
   const isCurrentMonth =
     month === new Date().getMonth() + 1 && year === new Date().getFullYear();
 
-  const theme = getMonthTheme(month);
+  const monthColor = MONTH_COLORS[month - 1];
 
   return (
     <div className="flex items-center gap-1">
@@ -54,7 +60,7 @@ export function MonthFilter({ month, year, onChange }: MonthFilterProps) {
       <div className="flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 dark:bg-zinc-800">
         <div
           className="h-2.5 w-2.5 rounded-full transition-colors duration-300"
-          style={{ backgroundColor: theme.color }}
+          style={{ backgroundColor: monthColor }}
         />
         <span className="text-sm font-bold text-zinc-900 dark:text-white">
           {MONTH_NAMES[month - 1]}

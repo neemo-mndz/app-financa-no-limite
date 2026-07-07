@@ -1,37 +1,51 @@
-// Cada mês tem sua cor/gradiente único para diferenciação visual
-export const MONTH_THEMES = [
-  // Janeiro
-  { gradient: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#6366f1", name: "Indigo" },
-  // Fevereiro
-  { gradient: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)", color: "#ec4899", name: "Rosa" },
-  // Março
-  { gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#10b981", name: "Esmeralda" },
-  // Abril
-  { gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", color: "#f59e0b", name: "Ambar" },
-  // Maio
-  { gradient: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", color: "#8b5cf6", name: "Violeta" },
-  // Junho
-  { gradient: "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)", color: "#06b6d4", name: "Ciano" },
-  // Julho
-  { gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", color: "#3b82f6", name: "Azul" },
-  // Agosto
-  { gradient: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)", color: "#ef4444", name: "Vermelho" },
-  // Setembro
-  { gradient: "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)", color: "#14b8a6", name: "Teal" },
-  // Outubro
-  { gradient: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", color: "#f97316", name: "Laranja" },
-  // Novembro
-  { gradient: "linear-gradient(135deg, #a855f7 0%, #9333ea 100%)", color: "#a855f7", name: "Purpura" },
-  // Dezembro
-  { gradient: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)", color: "#22c55e", name: "Verde" },
-];
+// Cores baseadas na porcentagem de gastos (sistema de alerta)
+// Verde → Amarelo → Laranja → Vermelho
 
-export function getMonthTheme(month: number) {
-  return MONTH_THEMES[month - 1] || MONTH_THEMES[0];
+export interface SpendingTheme {
+  gradient: string;
+  color: string;
+  shadow: string;
+  label: string;
 }
 
-// Shadow color for buttons/cards based on month
-export function getMonthShadow(month: number) {
-  const theme = getMonthTheme(month);
-  return `${theme.color}30`;
+export function getSpendingTheme(percentUsed: number): SpendingTheme {
+  if (percentUsed <= 25) {
+    return {
+      gradient: "linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)",
+      color: "#10b981",
+      shadow: "rgba(16, 185, 129, 0.3)",
+      label: "Tranquilo",
+    };
+  }
+  if (percentUsed <= 50) {
+    return {
+      gradient: "linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%)",
+      color: "#6366f1",
+      shadow: "rgba(99, 102, 241, 0.3)",
+      label: "No controle",
+    };
+  }
+  if (percentUsed <= 75) {
+    return {
+      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)",
+      color: "#f59e0b",
+      shadow: "rgba(245, 158, 11, 0.3)",
+      label: "Atencao",
+    };
+  }
+  if (percentUsed <= 90) {
+    return {
+      gradient: "linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%)",
+      color: "#f97316",
+      shadow: "rgba(249, 115, 22, 0.3)",
+      label: "Cuidado!",
+    };
+  }
+  // > 90%
+  return {
+    gradient: "linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)",
+    color: "#ef4444",
+    shadow: "rgba(239, 68, 68, 0.35)",
+    label: "Critico!",
+  };
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { StatCard } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
-import { getMonthTheme } from "@/lib/month-colors";
+import { getSpendingTheme } from "@/lib/month-colors";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -32,7 +32,6 @@ interface DashboardProps {
   transactionCount: number;
   daysInMonth: number;
   currentDay: number;
-  month: number;
   cards: CardItem[];
   weeklySpent: number;
   onAddCard: (name: string, invoiceAmount: number) => void;
@@ -47,7 +46,6 @@ export function Dashboard({
   transactionCount,
   daysInMonth,
   currentDay,
-  month,
   cards,
   weeklySpent,
   onAddCard,
@@ -93,17 +91,21 @@ export function Dashboard({
     }
   };
 
-  const monthTheme = getMonthTheme(month);
+  const spendingTheme = getSpendingTheme(percentUsed);
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero card with circular progress */}
       <div
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl"
-        style={{ background: monthTheme.gradient, boxShadow: `0 20px 40px -12px ${monthTheme.color}30` }}
+        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl transition-all duration-700"
+        style={{ background: spendingTheme.gradient, boxShadow: `0 20px 40px -12px ${spendingTheme.shadow}` }}
       >
-        <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
+        {/* Animated background blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 right-0 h-72 w-72 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3 animate-blob" />
+          <div className="absolute bottom-0 left-0 h-56 w-56 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4 animate-blob animation-delay-2000" />
+          <div className="absolute top-1/2 left-1/2 h-40 w-40 rounded-full bg-white/3 -translate-x-1/2 -translate-y-1/2 animate-blob animation-delay-4000" />
+        </div>
 
         <div className="relative flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
           {/* Circular Progress */}
@@ -123,6 +125,10 @@ export function Dashboard({
           {/* Info */}
           <div className="flex-1 text-center sm:text-left space-y-3">
             <div>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 mb-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                <span className="text-[11px] font-semibold text-white/90 uppercase tracking-wider">{spendingTheme.label}</span>
+              </div>
               <p className="text-sm text-white/60 font-medium">Gasto este mes</p>
               <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 {formatCurrency(totalSpent)}
