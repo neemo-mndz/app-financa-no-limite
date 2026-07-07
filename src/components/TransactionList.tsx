@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getCategoryEmoji } from "@/lib/category-icons";
-import { Trash2, FileDown, FileText } from "lucide-react";
+import { Trash2, FileDown, FileText, Pencil, X, Check } from "lucide-react";
 import type { Transaction, Category } from "@/db/schema";
 
 interface TransactionListProps {
   transactions: Transaction[];
   categories: Category[];
   onDelete: (id: string) => void;
+  onEdit: (id: string, description: string, amount: number, categoryId: string | null) => void;
   onExportCSV: () => void;
   onExportPDF: () => void;
 }
@@ -19,12 +24,36 @@ export function TransactionList({
   transactions,
   categories,
   onDelete,
+  onEdit,
   onExportCSV,
   onExportPDF,
 }: TransactionListProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editAmountCents, setEditAmountCents] = useState(0);
+  const [editCategoryId, setEditCategoryId] = useState("");
+
   const getCategoryById = (id: string | null) => {
     if (!id) return null;
     return categories.find((c) => c.id === id);
+  };
+
+  const startEdit = (t: Transaction) => {
+    setEditingId(t.id);
+    setEditDesc(t.description);
+    setEditAmountCents(Math.round(Number(t.amount) * 100));
+    setEditCategoryId(t.categoryId || "");
+  };
+
+  const saveEdit = () => {
+    if (editingId && editDesc.trim() && editAmountCents > 0) {
+      onEdit(editingId, editDesc.trim(), editAmountCents / 100, editCategoryId || null);
+      setEditingId(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
   };
 
   return (
@@ -60,6 +89,50 @@ export function TransactionList({
         <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
           {transactions.map((t, idx) => {
             const category = getCategoryById(t.categoryId);
+            const isEditing = editingId === t.id;
+
+            if (isEditing) {
+              return (
+                <div
+                  key={t.id}
+                  className="rounded-xl border border-indigo-200/50 bg-indigo-50/30 p-3 dark:border-indigo-800/30 dark:bg-indigo-950/20 animate-fade-in"
+                >
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-12">
+                    <div className="sm:col-span-4">
+                      <Input
+                        value={editDesc}
+                        onChange={(e) => setEditDesc(e.target.value)}
+                        placeholder="Descricao"
+                        onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <CurrencyInput
+                        value={editAmountCents}
+                        onChange={setEditAmountCents}
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <Select
+                        value={editCategoryId}
+                        onChange={(e) => setEditCategoryId(e.target.value)}
+                        placeholder="Categoria"
+                        options={categories.map((c) => ({ value: c.id, label: c.name }))}
+                      />
+                    </div>
+                    <div className="sm:col-span-2 flex gap-1.5">
+                      <Button size="sm" onClick={saveEdit} className="flex-1 h-11">
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={cancelEdit} className="h-11">
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={t.id}
@@ -99,10 +172,16 @@ export function TransactionList({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
                     -{formatCurrency(Number(t.amount))}
                   </span>
+                  <button
+                    onClick={() => startEdit(t)}
+                    className="rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
                   <button
                     onClick={() => onDelete(t.id)}
                     className="rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-red-950 dark:hover:text-red-400"

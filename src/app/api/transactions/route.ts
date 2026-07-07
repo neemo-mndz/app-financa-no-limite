@@ -88,3 +88,39 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function PUT(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { id, ...data } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: "ID required" }, { status: 400 });
+  }
+
+  const parsed = transactionSchema.safeParse(data);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+
+  let categoryId: string | null = null;
+  if (parsed.data.categoryId && typeof parsed.data.categoryId === "string" && parsed.data.categoryId.length > 0) {
+    categoryId = parsed.data.categoryId;
+  }
+
+  const result = await db
+    .update(transactions)
+    .set({
+      description: parsed.data.description,
+      amount: parsed.data.amount.toString(),
+      categoryId,
+    })
+    .where(and(eq(transactions.id, id), eq(transactions.userId, session.userId)))
+    .returning();
+
+  return NextResponse.json(result[0]);
+}

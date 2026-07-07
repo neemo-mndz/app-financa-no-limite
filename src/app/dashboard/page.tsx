@@ -88,6 +88,14 @@ export default function DashboardPage() {
     }
   };
 
+  const handleEditTransaction = async (id: string, description: string, amount: number, categoryId: string | null) => {
+    const res = await fetch("/api/transactions", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, description, amount, categoryId, month, year }),
+    });
+    if (res.ok) await fetchData();
+  };
+
   const handleDeleteTransaction = async (id: string) => {
     const res = await fetch(`/api/transactions?id=${id}`, { method: "DELETE" });
     if (res.ok) await fetchData();
@@ -315,6 +323,7 @@ export default function DashboardPage() {
               transactions={transactions}
               categories={categories}
               onDelete={handleDeleteTransaction}
+              onEdit={handleEditTransaction}
               onExportCSV={handleExportCSV}
               onExportPDF={handleExportPDF}
             />
@@ -329,6 +338,7 @@ export default function DashboardPage() {
             />
             <CategoryManager
               categories={categories}
+              transactions={transactions}
               onAdd={handleAddCategory}
               onUpdate={handleUpdateCategory}
               onDelete={handleDeleteCategory}

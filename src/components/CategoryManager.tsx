@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
 import { getCategoryEmoji } from "@/lib/category-icons";
-import type { Category } from "@/db/schema";
+import { formatCurrency } from "@/lib/utils";
+import type { Category, Transaction } from "@/db/schema";
 
 interface CategoryManagerProps {
   categories: Category[];
+  transactions: Transaction[];
   onAdd: (name: string, color: string) => void;
   onUpdate: (id: string, name: string, color: string) => void;
   onDelete: (id: string) => void;
@@ -23,6 +25,7 @@ const PRESET_COLORS = [
 
 export function CategoryManager({
   categories,
+  transactions,
   onAdd,
   onUpdate,
   onDelete,
@@ -31,6 +34,16 @@ export function CategoryManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
+
+  // Calculate spending per category
+  const spendingByCategory: Record<string, number> = {};
+  transactions.forEach((t) => {
+    if (t.categoryId) {
+      spendingByCategory[t.categoryId] = (spendingByCategory[t.categoryId] || 0) + Number(t.amount);
+    }
+  });
+
+  const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
 
   const handleAdd = () => {
     if (name.trim()) {
@@ -63,11 +76,16 @@ export function CategoryManager({
     setColor(PRESET_COLORS[0]);
   };
 
+  // Sort categories by spending (highest first)
+  const sortedCategories = [...categories].sort((a, b) => {
+    return (spendingByCategory[b.id] || 0) - (spendingByCategory[a.id] || 0);
+  });
+
   return (
     <Card className="animate-fade-in stagger-4">
       <CardHeader
         title="Categorias"
-        subtitle="Organize seus gastos"
+        subtitle={`Total: ${formatCurrency(totalSpent)}`}
         action={
           !isAdding &&
           !editingId && (
@@ -127,45 +145,76 @@ export function CategoryManager({
         </div>
       )}
 
-      {/* Category List */}
-      <div className="space-y-1 max-h-[360px] overflow-y-auto pr-1">
+      {/* Category List with spending */}
+      <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
         {categories.length === 0 ? (
           <p className="py-8 text-center text-sm text-zinc-400">
             Nenhuma categoria
           </p>
         ) : (
-          categories.map((cat) => (
-            <div
-              key={cat.id}
-              className="group flex items-center justify-between rounded-xl p-2.5 transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
-                  style={{ backgroundColor: `${cat.color}12` }}
-                >
-                  {getCategoryEmoji(cat.icon, cat.name)}
+          sortedCategories.map((cat) => {
+            const catSpending = spendingByCategory[cat.id] || 0;
+            const percent = totalSpent > 0 ? (catSpending / totalSpent) * 100 : 0;
+
+            return (
+              <div
+                key={cat.id}
+                className="group rounded-xl p-2.5 transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm"
+                      style={{ backgroundColor: `${cat.color}12` }}
+                    >
+                      {getCategoryEmoji(cat.icon, cat.name)}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 block truncate">
+                        {cat.name}
+                      </span>
+                      {catSpending > 0 && (
+                        <span className="text-[10px] text-zinc-400">
+                          {percent.toFixed(0)}% dos gastos
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="text-xs font-bold tabular-nums"
+                      style={{ color: catSpending > 0 ? cat.color : "#a1a1aa" }}
+                    >
+                      {catSpending > 0 ? formatCurrency(catSpending) : "-"}
+                    </span>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <button
+                        onClick={() => handleEdit(cat)}
+                        className="rounded-lg p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(cat.id)}
+                        className="rounded-lg p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                  {cat.name}
-                </span>
+                {/* Mini progress bar */}
+                {catSpending > 0 && (
+                  <div className="mt-1.5 ml-[42px] h-1 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(percent, 100)}%`, backgroundColor: cat.color }}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                <button
-                  onClick={() => handleEdit(cat)}
-                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
-                >
-                  <Pencil className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => onDelete(cat.id)}
-                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </Card>
