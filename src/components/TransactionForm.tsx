@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Zap } from "lucide-react";
 import type { Category } from "@/db/schema";
 
@@ -28,9 +29,10 @@ export function TransactionForm({
   onSubmit,
 }: TransactionFormProps) {
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amountCents, setAmountCents] = useState(0);
   const [categoryId, setCategoryId] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const descRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export function TransactionForm({
     if (!description.trim()) {
       newErrors.description = "Obrigatorio";
     }
-    if (!amount || Number(amount) <= 0) {
+    if (amountCents <= 0) {
       newErrors.amount = "Valor invalido";
     }
 
@@ -48,18 +50,22 @@ export function TransactionForm({
       return;
     }
 
+    const amountReais = amountCents / 100;
+
     onSubmit({
       description: description.trim(),
-      amount: Number(amount),
+      amount: amountReais,
       categoryId: categoryId || null,
       month,
       year,
     });
 
     setDescription("");
-    setAmount("");
+    setAmountCents(0);
     setCategoryId("");
     setErrors({});
+    // Focus back on description for quick consecutive entries
+    descRef.current?.focus();
   };
 
   return (
@@ -80,21 +86,19 @@ export function TransactionForm({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
           <div className="sm:col-span-4">
             <Input
+              ref={descRef}
               placeholder="O que voce gastou?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               error={errors.description}
             />
           </div>
-          <div className="sm:col-span-2">
-            <Input
-              type="number"
-              placeholder="R$ 0,00"
-              step="0.01"
-              min="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+          <div className="sm:col-span-3">
+            <CurrencyInput
+              value={amountCents}
+              onChange={setAmountCents}
               error={errors.amount}
+              placeholder="R$ 0,00"
             />
           </div>
           <div className="sm:col-span-3">
@@ -108,7 +112,7 @@ export function TransactionForm({
               }))}
             />
           </div>
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <Button type="submit" variant="gradient" className="w-full h-11">
               <Zap className="h-4 w-4" />
               Adicionar

@@ -9,7 +9,6 @@ import { CategoryManager } from "@/components/CategoryManager";
 import { MonthFilter } from "@/components/MonthFilter";
 import { SettingsModal } from "@/components/SettingsModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/Button";
 import { LogOut, Wallet } from "lucide-react";
 import { getCurrentMonthYear, formatCurrency } from "@/lib/utils";
 import type { Transaction, Category } from "@/db/schema";
@@ -17,10 +16,17 @@ import Papa from "papaparse";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+interface CardItem {
+  id: string;
+  name: string;
+  invoiceAmount: string;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [cards, setCards] = useState<CardItem[]>([]);
   const [monthlyLimit, setMonthlyLimit] = useState(5000);
   const [loading, setLoading] = useState(true);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
@@ -30,10 +36,11 @@ export default function DashboardPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [transRes, catRes, settingsRes] = await Promise.all([
+      const [transRes, catRes, settingsRes, cardsRes] = await Promise.all([
         fetch(`/api/transactions?month=${month}&year=${year}`),
         fetch("/api/categories"),
         fetch("/api/settings"),
+        fetch("/api/cards"),
       ]);
 
       if (transRes.ok) setTransactions(await transRes.json());
@@ -42,6 +49,7 @@ export default function DashboardPage() {
         const data = await settingsRes.json();
         setMonthlyLimit(Number(data.monthlyLimit));
       }
+      if (cardsRes.ok) setCards(await cardsRes.json());
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -108,6 +116,26 @@ export default function DashboardPage() {
     if (res.ok) setMonthlyLimit(limit);
   };
 
+  // Cards
+  const handleAddCard = async (name: string, invoiceAmount: number) => {
+    const res = await fetch("/api/cards", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, invoiceAmount }),
+    });
+    if (res.ok) fetchData();
+  };
+
+  const handleUpdateCard = async (id: string, name: string, invoiceAmount: number) => {
+    const res = await fetch("/api/cards", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, invoiceAmount }),
+    });
+    if (res.ok) fetchData();
+  };
+
+  const handleDeleteCard = async (id: string) => {
+    const res = await fetch(`/api/cards?id=${id}`, { method: "DELETE" });
+    if (res.ok) fetchData();
+  };
+
   const handleExportCSV = () => {
     const data = transactions.map((t) => {
       const category = categories.find((c) => c.id === t.categoryId);
@@ -145,7 +173,6 @@ export default function DashboardPage() {
     doc.setFontSize(9);
     doc.setTextColor(120);
     doc.text(`${monthNames[month - 1]} ${year} | ${userEmail}`, 14, 30);
-
     doc.setDrawColor(230);
     doc.line(14, 34, 196, 34);
 
@@ -210,7 +237,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
-      {/* Gradient mesh background */}
       <div className="fixed inset-0 gradient-mesh pointer-events-none" />
 
       {/* Header */}
@@ -245,16 +271,18 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="relative mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
-        {/* Dashboard Stats */}
         <Dashboard
           limit={monthlyLimit}
           totalSpent={totalSpent}
           transactionCount={transactions.length}
           daysInMonth={daysInMonth}
           currentDay={currentDay}
+          cards={cards}
+          onAddCard={handleAddCard}
+          onUpdateCard={handleUpdateCard}
+          onDeleteCard={handleDeleteCard}
         />
 
-        {/* Transaction Form */}
         <TransactionForm
           categories={categories}
           month={month}
@@ -262,7 +290,6 @@ export default function DashboardPage() {
           onSubmit={handleAddTransaction}
         />
 
-        {/* Content Grid */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <TransactionList
