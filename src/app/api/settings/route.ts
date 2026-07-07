@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { settingsSchema } from "@/lib/validations";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   const session = await getSession();
   if (!session) {

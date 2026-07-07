@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { verifyPassword, createToken, setSessionCookie } from "@/lib/auth";
 import { z } from "zod";
 
+export const runtime = "nodejs";
+
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
   password: z.string().min(1, "Senha é obrigatória"),

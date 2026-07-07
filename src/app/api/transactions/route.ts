@@ -5,6 +5,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { transactionSchema } from "@/lib/validations";
 
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) {

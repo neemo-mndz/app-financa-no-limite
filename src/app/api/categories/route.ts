@@ -5,6 +5,8 @@ import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { categorySchema } from "@/lib/validations";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   const session = await getSession();
   if (!session) {

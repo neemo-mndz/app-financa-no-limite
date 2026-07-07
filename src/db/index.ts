@@ -6,13 +6,18 @@ let _db: NeonHttpDatabase<typeof schema> | null = null;
 
 function getDb(): NeonHttpDatabase<typeof schema> {
   if (!_db) {
-    const databaseUrl = process.env.DATABASE_URL;
+    let databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
       throw new Error(
         "DATABASE_URL is not defined. Please set it in your .env.local file.\n" +
           "Example: DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require"
       );
     }
+    // Remove channel_binding param which can cause issues with the HTTP driver
+    const url = new URL(databaseUrl);
+    url.searchParams.delete("channel_binding");
+    databaseUrl = url.toString();
+
     const sql = neon(databaseUrl);
     _db = drizzle(sql, { schema });
   }

@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { hashPassword, createToken, setSessionCookie } from "@/lib/auth";
 import { z } from "zod";
 
+export const runtime = "nodejs";
+
 const signupSchema = z.object({
   email: z.string().email("E-mail inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
@@ -59,10 +61,11 @@ export async function POST(request: NextRequest) {
       { user: { id: user.id, email: user.email } },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Signup error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Signup error:", message, error);
     return NextResponse.json(
-      { error: "Erro interno do servidor" },
+      { error: `Erro interno: ${message}` },
       { status: 500 }
     );
   }
