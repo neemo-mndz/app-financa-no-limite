@@ -60,7 +60,6 @@ export function Dashboard({
   const remaining = limit - totalSpent;
   const daysRemaining = Math.max(daysInMonth - currentDay, 0);
   const dailyAverage = currentDay > 0 ? totalSpent / currentDay : 0;
-  const projectedExpenses = dailyAverage * daysInMonth;
   const percentUsed = limit > 0 ? (totalSpent / limit) * 100 : 0;
 
   // Daily limit base
@@ -76,8 +75,10 @@ export function Dashboard({
   // Total cards invoice
   const totalCardsInvoice = cards.reduce((sum, c) => sum + Number(c.invoiceAmount), 0);
 
-  // Projection = projected expenses + cards invoice
-  const totalProjection = projectedExpenses + totalCardsInvoice;
+  // Projection = what was already spent + projected remaining days + cards
+  // Only projects future spending based on daily average
+  const projectedRemaining = dailyAverage * daysRemaining;
+  const totalProjection = totalSpent + projectedRemaining + totalCardsInvoice;
 
   // Circular progress
   const circumference = 2 * Math.PI * 54;
@@ -229,7 +230,7 @@ export function Dashboard({
                   Cartoes & Projecao
                 </h2>
                 <p className="text-xs text-zinc-400 mt-0.5">
-                  Gastos projetados: {formatCurrency(projectedExpenses)} + Cartoes: {formatCurrency(totalCardsInvoice)}
+                  Gastos: {formatCurrency(totalSpent)} + Projecao: {formatCurrency(projectedRemaining)} + Cartoes: {formatCurrency(totalCardsInvoice)}
                 </p>
               </div>
               <button onClick={() => setShowCardModal(false)} className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
