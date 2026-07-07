@@ -7,16 +7,46 @@ import { categorySchema } from "@/lib/validations";
 
 export const runtime = "nodejs";
 
+const DEFAULT_CATEGORIES = [
+  { name: "Alimentacao", color: "#f97316", icon: "utensils" },
+  { name: "Bebidas", color: "#8b5cf6", icon: "wine" },
+  { name: "Cigarro", color: "#64748b", icon: "cigarette" },
+  { name: "Lazer", color: "#06b6d4", icon: "gamepad" },
+  { name: "Transporte", color: "#3b82f6", icon: "car" },
+  { name: "Saude", color: "#22c55e", icon: "heart" },
+  { name: "Moradia", color: "#eab308", icon: "home" },
+  { name: "Educacao", color: "#ec4899", icon: "book" },
+  { name: "Assinaturas", color: "#6366f1", icon: "credit-card" },
+  { name: "Outros", color: "#a1a1aa", icon: "tag" },
+];
+
 export async function GET() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await db
+  let result = await db
     .select()
     .from(categories)
     .where(eq(categories.userId, session.userId));
+
+  // Se o usuario nao tem categorias, criar as padrao
+  if (result.length === 0) {
+    await db.insert(categories).values(
+      DEFAULT_CATEGORIES.map((cat) => ({
+        userId: session.userId,
+        name: cat.name,
+        color: cat.color,
+        icon: cat.icon,
+      }))
+    );
+
+    result = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, session.userId));
+  }
 
   return NextResponse.json(result);
 }
