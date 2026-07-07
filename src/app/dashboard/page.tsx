@@ -6,6 +6,7 @@ import { Dashboard } from "@/components/Dashboard";
 import { TransactionForm } from "@/components/TransactionForm";
 import { TransactionList } from "@/components/TransactionList";
 import { CategoryManager } from "@/components/CategoryManager";
+import { Calendar } from "@/components/Calendar";
 import { MonthFilter } from "@/components/MonthFilter";
 import { SettingsModal } from "@/components/SettingsModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -217,6 +218,30 @@ export default function DashboardPage() {
       ? today.getDate()
       : daysInMonth;
 
+  // Calculate weekly spent (current week: Mon-Sun)
+  const getWeeklySpent = () => {
+    const now = new Date();
+    // Get Monday of current week
+    const dayOfWeek = now.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    return transactions
+      .filter((t) => {
+        const d = new Date(t.createdAt);
+        return d >= monday && d <= sunday;
+      })
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+  };
+
+  const weeklySpent = getWeeklySpent();
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -269,6 +294,7 @@ export default function DashboardPage() {
           daysInMonth={daysInMonth}
           currentDay={currentDay}
           cards={cards}
+          weeklySpent={weeklySpent}
           onAddCard={handleAddCard}
           onUpdateCard={handleUpdateCard}
           onDeleteCard={handleDeleteCard}
@@ -284,7 +310,7 @@ export default function DashboardPage() {
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-5">
             <TransactionList
               transactions={transactions}
               categories={categories}
@@ -293,7 +319,14 @@ export default function DashboardPage() {
               onExportPDF={handleExportPDF}
             />
           </div>
-          <div>
+          <div className="space-y-5">
+            <Calendar
+              transactions={transactions}
+              categories={categories}
+              month={month}
+              year={year}
+              onDelete={handleDeleteTransaction}
+            />
             <CategoryManager
               categories={categories}
               onAdd={handleAddCategory}

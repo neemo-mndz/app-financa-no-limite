@@ -11,6 +11,7 @@ import {
   PiggyBank,
   Receipt,
   CalendarClock,
+  CalendarRange,
   Clock,
   CreditCard,
   Plus,
@@ -31,6 +32,7 @@ interface DashboardProps {
   daysInMonth: number;
   currentDay: number;
   cards: CardItem[];
+  weeklySpent: number;
   onAddCard: (name: string, invoiceAmount: number) => void;
   onUpdateCard: (id: string, name: string, invoiceAmount: number) => void;
   onDeleteCard: (id: string) => void;
@@ -44,6 +46,7 @@ export function Dashboard({
   daysInMonth,
   currentDay,
   cards,
+  weeklySpent,
   onAddCard,
   onUpdateCard,
   onDeleteCard,
@@ -61,6 +64,10 @@ export function Dashboard({
 
   // Daily limit base
   const dailyLimitBase = daysInMonth > 0 ? limit / daysInMonth : 0;
+
+  // Weekly budget = limit divided by weeks in month
+  const weeksInMonth = daysInMonth / 7;
+  const weeklyBudget = weeksInMonth > 0 ? limit / weeksInMonth : 0;
 
   // Dilution: remaining budget spread across remaining days
   const adjustedDailyLimit = daysRemaining > 0 ? remaining / daysRemaining : 0;
@@ -135,13 +142,20 @@ export function Dashboard({
       {children}
 
       {/* Stat Cards Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-6">
         <StatCard
           title="Dias Restantes"
           value={`${daysRemaining}`}
           subtitle={`de ${daysInMonth} dias`}
           icon={<Clock className="h-4 w-4 text-indigo-500" />}
           trend="neutral"
+        />
+        <StatCard
+          title="Semanal"
+          value={formatCurrency(weeklyBudget)}
+          subtitle={`Gasto: ${formatCurrency(weeklySpent)}`}
+          icon={<CalendarRange className="h-4 w-4 text-violet-500" />}
+          trend={weeklySpent <= weeklyBudget ? "up" : "down"}
         />
         <StatCard
           title="Limite Diario"
