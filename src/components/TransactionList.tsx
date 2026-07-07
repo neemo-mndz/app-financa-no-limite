@@ -3,7 +3,7 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Trash2, FileDown, Tag } from "lucide-react";
+import { Trash2, FileDown, FileText, Tag } from "lucide-react";
 import type { Transaction, Category } from "@/db/schema";
 
 interface TransactionListProps {
@@ -11,6 +11,7 @@ interface TransactionListProps {
   categories: Category[];
   onDelete: (id: string) => void;
   onExportCSV: () => void;
+  onExportPDF: () => void;
 }
 
 export function TransactionList({
@@ -18,6 +19,7 @@ export function TransactionList({
   categories,
   onDelete,
   onExportCSV,
+  onExportPDF,
 }: TransactionListProps) {
   const getCategoryById = (id: string | null) => {
     if (!id) return null;
@@ -27,23 +29,29 @@ export function TransactionList({
   return (
     <Card>
       <CardHeader
-        title="Transações"
+        title="Transacoes"
         subtitle={`${transactions.length} registros`}
         action={
-          <Button variant="secondary" size="sm" onClick={onExportCSV}>
-            <FileDown className="h-4 w-4" />
-            CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={onExportCSV}>
+              <FileDown className="h-4 w-4" />
+              <span className="hidden sm:inline">CSV</span>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={onExportPDF}>
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+          </div>
         }
       />
 
       {transactions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
-            <Receipt className="h-8 w-8 text-zinc-400" />
+            <ReceiptIcon className="h-8 w-8 text-zinc-400" />
           </div>
           <p className="mt-4 text-sm font-medium text-zinc-500">
-            Nenhuma transação encontrada
+            Nenhuma transacao encontrada
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             Adicione seu primeiro gasto acima
@@ -64,7 +72,7 @@ export function TransactionList({
                     style={{
                       backgroundColor: category
                         ? `${category.color}20`
-                        : "#f4f4f5",
+                        : undefined,
                     }}
                   >
                     <Tag
@@ -114,7 +122,7 @@ export function TransactionList({
   );
 }
 
-function Receipt({ className }: { className?: string }) {
+function ReceiptIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

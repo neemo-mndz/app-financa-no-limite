@@ -7,6 +7,7 @@ import {
   TrendingDown,
   PiggyBank,
   Receipt,
+  CalendarClock,
 } from "lucide-react";
 
 interface DashboardProps {
@@ -28,6 +29,8 @@ export function Dashboard({
   const dailyAverage = currentDay > 0 ? totalSpent / currentDay : 0;
   const projectedTotal = dailyAverage * daysInMonth;
   const percentUsed = limit > 0 ? (totalSpent / limit) * 100 : 0;
+  const dailyLimit = daysInMonth > 0 ? limit / daysInMonth : 0;
+  const dailyRemaining = dailyLimit - dailyAverage;
 
   return (
     <div className="space-y-6">
@@ -60,29 +63,40 @@ export function Dashboard({
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Limite Mensal"
           value={formatCurrency(limit)}
-          subtitle={`${transactionCount} transações`}
+          subtitle={`${transactionCount} transacoes`}
           icon={<Wallet className="h-5 w-5 text-indigo-600" />}
         />
         <StatCard
           title="Total Gasto"
           value={formatCurrency(totalSpent)}
-          subtitle={`Média ${formatCurrency(dailyAverage)}/dia`}
+          subtitle={`Media ${formatCurrency(dailyAverage)}/dia`}
           icon={<TrendingDown className="h-5 w-5 text-red-500" />}
           trend="down"
         />
         <StatCard
           title="Restante"
           value={formatCurrency(remaining)}
-          subtitle={remaining < 0 ? "Limite excedido!" : "Disponível"}
+          subtitle={remaining < 0 ? "Limite excedido!" : "Disponivel"}
           icon={<PiggyBank className="h-5 w-5 text-emerald-600" />}
           trend={remaining >= 0 ? "up" : "down"}
         />
         <StatCard
-          title="Projeção Fatura"
+          title="Limite Diario"
+          value={formatCurrency(dailyLimit)}
+          subtitle={
+            dailyRemaining >= 0
+              ? `Sobra ${formatCurrency(dailyRemaining)}/dia`
+              : `Excedido em ${formatCurrency(Math.abs(dailyRemaining))}/dia`
+          }
+          icon={<CalendarClock className="h-5 w-5 text-cyan-600" />}
+          trend={dailyRemaining >= 0 ? "up" : "down"}
+        />
+        <StatCard
+          title="Projecao Fatura"
           value={formatCurrency(projectedTotal)}
           subtitle={
             projectedTotal > limit

@@ -8,11 +8,14 @@ import { TransactionList } from "@/components/TransactionList";
 import { CategoryManager } from "@/components/CategoryManager";
 import { MonthFilter } from "@/components/MonthFilter";
 import { SettingsModal } from "@/components/SettingsModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { LogOut, Wallet } from "lucide-react";
-import { getCurrentMonthYear } from "@/lib/utils";
+import { getCurrentMonthYear, formatCurrency } from "@/lib/utils";
 import type { Transaction, Category } from "@/db/schema";
 import Papa from "papaparse";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -152,7 +155,7 @@ export default function DashboardPage() {
     const data = transactions.map((t) => {
       const category = categories.find((c) => c.id === t.categoryId);
       return {
-        Descrição: t.description,
+        Descricao: t.description,
         Valor: Number(t.amount),
         Categoria: category?.name || "Sem categoria",
         Data: new Date(t.createdAt).toLocaleDateString("pt-BR"),
@@ -167,6 +170,64 @@ export default function DashboardPage() {
     link.download = `gastos-${month}-${year}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const monthNames = [
+      "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    ];
+
+    const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+    const remaining = monthlyLimit - totalSpent;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyLimit = monthlyLimit / daysInMonth;
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(99, 102, 241); // indigo
+    doc.text("Financa no Limite", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Relatorio: ${monthNames[month - 1]} ${year}`, 14, 28);
+    doc.text(`Usuario: ${userEmail}`, 14, 34);
+
+    // Summary
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text("Resumo Financeiro", 14, 46);
+
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.text(`Limite Mensal: ${formatCurrency(monthlyLimit)}`, 14, 54);
+    doc.text(`Limite Diario: ${formatCurrency(dailyLimit)}`, 14, 60);
+    doc.text(`Total Gasto: ${formatCurrency(totalSpent)}`, 14, 66);
+    doc.text(`Restante: ${formatCurrency(remaining)}`, 14, 72);
+    doc.text(`Total de Transacoes: ${transactions.length}`, 14, 78);
+
+    // Table
+    const tableData = transactions.map((t) => {
+      const category = categories.find((c) => c.id === t.categoryId);
+      return [
+        t.description,
+        category?.name || "Sem categoria",
+        formatCurrency(Number(t.amount)),
+        new Date(t.createdAt).toLocaleDateString("pt-BR"),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 86,
+      head: [["Descricao", "Categoria", "Valor", "Data"]],
+      body: tableData,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+
+    doc.save(`relatorio-${month}-${year}.pdf`);
   };
 
   const handleMonthChange = (newMonth: number, newYear: number) => {
@@ -197,7 +258,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -207,12 +268,13 @@ export default function DashboardPage() {
             </div>
             <div className="hidden sm:block">
               <h1 className="text-base font-bold text-zinc-900 dark:text-white">
-                Finança no Limite
+                Financa no Limite
               </h1>
               <p className="text-xs text-zinc-500">{userEmail}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             <SettingsModal
               currentLimit={monthlyLimit}
               onSave={handleUpdateLimit}
@@ -261,6 +323,7 @@ export default function DashboardPage() {
               categories={categories}
               onDelete={handleDeleteTransaction}
               onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
             />
           </div>
           <div>
