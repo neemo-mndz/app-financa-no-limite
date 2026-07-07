@@ -3,7 +3,8 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Trash2, FileDown, FileText, Tag } from "lucide-react";
+import { getCategoryEmoji } from "@/lib/category-icons";
+import { Trash2, FileDown, FileText } from "lucide-react";
 import type { Transaction, Category } from "@/db/schema";
 
 interface TransactionListProps {
@@ -68,17 +69,14 @@ export function TransactionList({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
                     style={{
                       backgroundColor: category
                         ? `${category.color}20`
                         : undefined,
                     }}
                   >
-                    <Tag
-                      className="h-4 w-4"
-                      style={{ color: category?.color || "#a1a1aa" }}
-                    />
+                    {getCategoryEmoji(category?.icon, category?.name || t.description)}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">

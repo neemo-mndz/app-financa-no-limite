@@ -5,6 +5,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { getCategoryEmoji } from "@/lib/category-icons";
 import type { Category } from "@/db/schema";
 
 interface CategoryManagerProps {
@@ -141,9 +142,11 @@ export function CategoryManager({
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="h-4 w-4 rounded-full"
-                  style={{ backgroundColor: cat.color }}
-                />
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-lg"
+                  style={{ backgroundColor: `${cat.color}15` }}
+                >
+                  {getCategoryEmoji(cat.icon, cat.name)}
+                </div>
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                   {cat.name}
                 </span>
