@@ -64,7 +64,7 @@ export function CategoryManager({
   };
 
   return (
-    <Card>
+    <Card className="animate-fade-in stagger-4">
       <CardHeader
         title="Categorias"
         subtitle="Organize seus gastos"
@@ -72,11 +72,11 @@ export function CategoryManager({
           !isAdding &&
           !editingId && (
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
               onClick={() => setIsAdding(true)}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Nova
             </Button>
           )
@@ -85,7 +85,7 @@ export function CategoryManager({
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
+        <div className="mb-4 rounded-xl border border-indigo-200/50 bg-indigo-50/50 p-4 dark:border-indigo-800/30 dark:bg-indigo-950/20 animate-fade-in">
           <div className="space-y-3">
             <Input
               placeholder="Nome da categoria"
@@ -97,15 +97,15 @@ export function CategoryManager({
                 }
               }}
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {PRESET_COLORS.map((c) => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}
-                  className={`h-7 w-7 rounded-full transition-transform ${
+                  className={`h-6 w-6 rounded-full transition-all duration-200 ${
                     color === c
-                      ? "scale-125 ring-2 ring-offset-2 ring-indigo-500"
-                      : "hover:scale-110"
+                      ? "scale-125 ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-zinc-900"
+                      : "hover:scale-110 opacity-70 hover:opacity-100"
                   }`}
                   style={{ backgroundColor: c }}
                 />
@@ -116,12 +116,11 @@ export function CategoryManager({
                 size="sm"
                 onClick={editingId ? handleSaveEdit : handleAdd}
               >
-                <Check className="h-4 w-4" />
+                <Check className="h-3.5 w-3.5" />
                 {editingId ? "Salvar" : "Adicionar"}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleCancel}>
-                <X className="h-4 w-4" />
-                Cancelar
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
@@ -129,21 +128,21 @@ export function CategoryManager({
       )}
 
       {/* Category List */}
-      <div className="space-y-2">
+      <div className="space-y-1 max-h-[360px] overflow-y-auto pr-1">
         {categories.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-400">
-            Nenhuma categoria criada
+          <p className="py-8 text-center text-sm text-zinc-400">
+            Nenhuma categoria
           </p>
         ) : (
           categories.map((cat) => (
             <div
               key={cat.id}
-              className="flex items-center justify-between rounded-xl border border-zinc-100 p-3 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+              className="group flex items-center justify-between rounded-xl p-2.5 transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-lg"
-                  style={{ backgroundColor: `${cat.color}15` }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${cat.color}12` }}
                 >
                   {getCategoryEmoji(cat.icon, cat.name)}
                 </div>
@@ -151,18 +150,18 @@ export function CategoryManager({
                   {cat.name}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                 <button
                   onClick={() => handleEdit(cat)}
-                  className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-3 w-3" />
                 </button>
                 <button
                   onClick={() => onDelete(cat.id)}
-                  className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </button>
               </div>
             </div>

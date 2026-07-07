@@ -32,78 +32,116 @@ export function Dashboard({
   const dailyLimit = daysInMonth > 0 ? limit / daysInMonth : 0;
   const dailyRemaining = dailyLimit - dailyAverage;
 
+  // Calculate ring progress
+  const circumference = 2 * Math.PI * 54; // radius = 54
+  const strokeDashoffset = circumference - (Math.min(percentUsed, 100) / 100) * circumference;
+
+  const ringColor =
+    percentUsed > 90
+      ? "#ef4444"
+      : percentUsed > 70
+      ? "#f59e0b"
+      : "#6366f1";
+
   return (
-    <div className="space-y-6">
-      {/* Progress Bar */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Uso do limite mensal
-          </span>
-          <span className="text-sm font-bold text-zinc-900 dark:text-white">
-            {percentUsed.toFixed(1)}%
-          </span>
-        </div>
-        <div className="h-3 w-full rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              percentUsed > 90
-                ? "bg-red-500"
-                : percentUsed > 70
-                ? "bg-amber-500"
-                : "bg-indigo-500"
-            }`}
-            style={{ width: `${Math.min(percentUsed, 100)}%` }}
-          />
-        </div>
-        <div className="mt-2 flex justify-between text-xs text-zinc-400">
-          <span>{formatCurrency(totalSpent)} gasto</span>
-          <span>{formatCurrency(limit)} limite</span>
+    <div className="space-y-6 animate-fade-in">
+      {/* Hero card with circular progress */}
+      <div className="relative overflow-hidden rounded-3xl gradient-primary p-6 sm:p-8 shadow-xl shadow-indigo-500/20">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
+
+        <div className="relative flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+          {/* Circular Progress */}
+          <div className="relative flex-shrink-0">
+            <svg className="h-32 w-32 -rotate-90" viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="8"
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="white"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-white">
+                {Math.min(percentUsed, 100).toFixed(0)}%
+              </span>
+              <span className="text-xs text-white/60">usado</span>
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 text-center sm:text-left space-y-3">
+            <div>
+              <p className="text-sm text-white/60 font-medium">Gasto este mes</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                {formatCurrency(totalSpent)}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+              <div>
+                <p className="text-xs text-white/50">Limite</p>
+                <p className="text-sm font-semibold text-white">{formatCurrency(limit)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50">Restante</p>
+                <p className="text-sm font-semibold text-white">{formatCurrency(remaining)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/50">Transacoes</p>
+                <p className="text-sm font-semibold text-white">{transactionCount}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard
-          title="Limite Mensal"
-          value={formatCurrency(limit)}
-          subtitle={`${transactionCount} transacoes`}
-          icon={<Wallet className="h-5 w-5 text-indigo-600" />}
-        />
-        <StatCard
-          title="Total Gasto"
-          value={formatCurrency(totalSpent)}
-          subtitle={`Media ${formatCurrency(dailyAverage)}/dia`}
-          icon={<TrendingDown className="h-5 w-5 text-red-500" />}
-          trend="down"
-        />
-        <StatCard
-          title="Restante"
-          value={formatCurrency(remaining)}
-          subtitle={remaining < 0 ? "Limite excedido!" : "Disponivel"}
-          icon={<PiggyBank className="h-5 w-5 text-emerald-600" />}
-          trend={remaining >= 0 ? "up" : "down"}
-        />
+      {/* Stat Cards Grid */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Limite Diario"
           value={formatCurrency(dailyLimit)}
           subtitle={
             dailyRemaining >= 0
-              ? `Sobra ${formatCurrency(dailyRemaining)}/dia`
-              : `Excedido em ${formatCurrency(Math.abs(dailyRemaining))}/dia`
+              ? `+${formatCurrency(dailyRemaining)} sobra`
+              : `${formatCurrency(dailyRemaining)} excedido`
           }
-          icon={<CalendarClock className="h-5 w-5 text-cyan-600" />}
+          icon={<CalendarClock className="h-4 w-4 text-cyan-500" />}
           trend={dailyRemaining >= 0 ? "up" : "down"}
         />
         <StatCard
-          title="Projecao Fatura"
+          title="Media/dia"
+          value={formatCurrency(dailyAverage)}
+          subtitle={`${currentDay} dias passados`}
+          icon={<TrendingDown className="h-4 w-4 text-orange-500" />}
+          trend="neutral"
+        />
+        <StatCard
+          title="Restante"
+          value={formatCurrency(remaining)}
+          subtitle={remaining < 0 ? "Limite excedido!" : "Disponivel"}
+          icon={<PiggyBank className="h-4 w-4 text-emerald-500" />}
+          trend={remaining >= 0 ? "up" : "down"}
+        />
+        <StatCard
+          title="Projecao"
           value={formatCurrency(projectedTotal)}
-          subtitle={
-            projectedTotal > limit
-              ? "Acima do limite!"
-              : "Dentro do limite"
-          }
-          icon={<Receipt className="h-5 w-5 text-amber-600" />}
+          subtitle={projectedTotal > limit ? "Acima!" : "OK"}
+          icon={<Receipt className="h-4 w-4 text-amber-500" />}
           trend={projectedTotal <= limit ? "up" : "down"}
         />
       </div>

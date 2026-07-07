@@ -36,14 +36,8 @@ export default function DashboardPage() {
         fetch("/api/settings"),
       ]);
 
-      if (transRes.ok) {
-        const data = await transRes.json();
-        setTransactions(data);
-      }
-      if (catRes.ok) {
-        const data = await catRes.json();
-        setCategories(data);
-      }
+      if (transRes.ok) setTransactions(await transRes.json());
+      if (catRes.ok) setCategories(await catRes.json());
       if (settingsRes.ok) {
         const data = await settingsRes.json();
         setMonthlyLimit(Number(data.monthlyLimit));
@@ -59,16 +53,11 @@ export default function DashboardPage() {
     const checkUser = async () => {
       try {
         const res = await fetch("/api/auth/me");
-        if (!res.ok) {
-          router.push("/auth/login");
-          return;
-        }
+        if (!res.ok) { router.push("/auth/login"); return; }
         const data = await res.json();
         setUserEmail(data.user.email);
         fetchData();
-      } catch {
-        router.push("/auth/login");
-      }
+      } catch { router.push("/auth/login"); }
     };
     checkUser();
   }, [fetchData, router]);
@@ -80,75 +69,43 @@ export default function DashboardPage() {
   };
 
   const handleAddTransaction = async (data: {
-    description: string;
-    amount: number;
-    categoryId: string | null;
-    month: number;
-    year: number;
+    description: string; amount: number; categoryId: string | null; month: number; year: number;
   }) => {
     const res = await fetch("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
     });
-    if (res.ok) {
-      fetchData();
-    }
+    if (res.ok) fetchData();
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    const res = await fetch(`/api/transactions?id=${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      fetchData();
-    }
+    const res = await fetch(`/api/transactions?id=${id}`, { method: "DELETE" });
+    if (res.ok) fetchData();
   };
 
   const handleAddCategory = async (name: string, color: string) => {
     const res = await fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, color }),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, color }),
     });
-    if (res.ok) {
-      fetchData();
-    }
+    if (res.ok) fetchData();
   };
 
-  const handleUpdateCategory = async (
-    id: string,
-    name: string,
-    color: string
-  ) => {
+  const handleUpdateCategory = async (id: string, name: string, color: string) => {
     const res = await fetch("/api/categories", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, name, color }),
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, color }),
     });
-    if (res.ok) {
-      fetchData();
-    }
+    if (res.ok) fetchData();
   };
 
   const handleDeleteCategory = async (id: string) => {
-    const res = await fetch(`/api/categories?id=${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      fetchData();
-    }
+    const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+    if (res.ok) fetchData();
   };
 
   const handleUpdateLimit = async (limit: number) => {
     const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monthlyLimit: limit }),
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ monthlyLimit: limit }),
     });
-    if (res.ok) {
-      setMonthlyLimit(limit);
-    }
+    if (res.ok) setMonthlyLimit(limit);
   };
 
   const handleExportCSV = () => {
@@ -161,7 +118,6 @@ export default function DashboardPage() {
         Data: new Date(t.createdAt).toLocaleDateString("pt-BR"),
       };
     });
-
     const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -178,53 +134,49 @@ export default function DashboardPage() {
       "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
     ];
-
     const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
     const remaining = monthlyLimit - totalSpent;
     const daysInMonth = new Date(year, month, 0).getDate();
     const dailyLimit = monthlyLimit / daysInMonth;
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(99, 102, 241); // indigo
-    doc.text("Financa no Limite", 14, 20);
+    doc.setFontSize(22);
+    doc.setTextColor(99, 102, 241);
+    doc.text("Financa no Limite", 14, 22);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`${monthNames[month - 1]} ${year} | ${userEmail}`, 14, 30);
 
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Relatorio: ${monthNames[month - 1]} ${year}`, 14, 28);
-    doc.text(`Usuario: ${userEmail}`, 14, 34);
+    doc.setDrawColor(230);
+    doc.line(14, 34, 196, 34);
 
-    // Summary
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.text("Resumo Financeiro", 14, 46);
+    doc.setFontSize(11);
+    doc.setTextColor(40);
+    doc.text("Resumo", 14, 42);
+    doc.setFontSize(9);
+    doc.setTextColor(80);
+    doc.text(`Limite Mensal: ${formatCurrency(monthlyLimit)}`, 14, 50);
+    doc.text(`Limite Diario: ${formatCurrency(dailyLimit)}`, 14, 56);
+    doc.text(`Total Gasto: ${formatCurrency(totalSpent)}`, 100, 50);
+    doc.text(`Restante: ${formatCurrency(remaining)}`, 100, 56);
 
-    doc.setFontSize(10);
-    doc.setTextColor(60);
-    doc.text(`Limite Mensal: ${formatCurrency(monthlyLimit)}`, 14, 54);
-    doc.text(`Limite Diario: ${formatCurrency(dailyLimit)}`, 14, 60);
-    doc.text(`Total Gasto: ${formatCurrency(totalSpent)}`, 14, 66);
-    doc.text(`Restante: ${formatCurrency(remaining)}`, 14, 72);
-    doc.text(`Total de Transacoes: ${transactions.length}`, 14, 78);
-
-    // Table
     const tableData = transactions.map((t) => {
       const category = categories.find((c) => c.id === t.categoryId);
       return [
         t.description,
-        category?.name || "Sem categoria",
+        category?.name || "-",
         formatCurrency(Number(t.amount)),
         new Date(t.createdAt).toLocaleDateString("pt-BR"),
       ];
     });
 
     autoTable(doc, {
-      startY: 86,
+      startY: 64,
       head: [["Descricao", "Categoria", "Valor", "Data"]],
       body: tableData,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontSize: 8, fontStyle: "bold" },
       alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 14, right: 14 },
     });
 
     doc.save(`relatorio-${month}-${year}.pdf`);
@@ -235,10 +187,7 @@ export default function DashboardPage() {
     setYear(newYear);
   };
 
-  const totalSpent = transactions.reduce(
-    (sum, t) => sum + Number(t.amount),
-    0
-  );
+  const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
   const daysInMonth = new Date(year, month, 0).getDate();
   const today = new Date();
   const currentDay =
@@ -249,55 +198,53 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-          <p className="text-sm text-zinc-500">Carregando...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative h-12 w-12">
+            <div className="absolute inset-0 h-12 w-12 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600 dark:border-indigo-900 dark:border-t-indigo-500" />
+          </div>
+          <p className="text-sm font-medium text-zinc-500">Carregando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
+      {/* Gradient mesh background */}
+      <div className="fixed inset-0 gradient-mesh pointer-events-none" />
+
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b border-zinc-200/50 bg-white/70 backdrop-blur-xl dark:border-zinc-800/50 dark:bg-zinc-950/70">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600">
-              <Wallet className="h-5 w-5 text-white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary shadow-sm shadow-indigo-500/20">
+              <Wallet className="h-4 w-4 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-base font-bold text-zinc-900 dark:text-white">
+              <h1 className="text-sm font-bold text-zinc-900 dark:text-white leading-none">
                 Financa no Limite
               </h1>
-              <p className="text-xs text-zinc-500">{userEmail}</p>
+              <p className="text-[11px] text-zinc-400 mt-0.5">{userEmail}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <SettingsModal
-              currentLimit={monthlyLimit}
-              onSave={handleUpdateLimit}
-            />
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
+          <div className="flex items-center gap-0.5">
+            <MonthFilter month={month} year={year} onChange={handleMonthChange} />
+            <div className="ml-2 flex items-center gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+              <ThemeToggle />
+              <SettingsModal currentLimit={monthlyLimit} onSave={handleUpdateLimit} />
+              <button
+                onClick={handleLogout}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {/* Month Filter */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <MonthFilter
-            month={month}
-            year={year}
-            onChange={handleMonthChange}
-          />
-        </div>
-
+      <main className="relative mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
         {/* Dashboard Stats */}
         <Dashboard
           limit={monthlyLimit}
@@ -316,7 +263,7 @@ export default function DashboardPage() {
         />
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <TransactionList
               transactions={transactions}

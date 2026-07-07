@@ -28,87 +28,86 @@ export function TransactionList({
   };
 
   return (
-    <Card>
+    <Card className="animate-fade-in stagger-3">
       <CardHeader
         title="Transacoes"
         subtitle={`${transactions.length} registros`}
         action={
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={onExportCSV}>
-              <FileDown className="h-4 w-4" />
-              <span className="hidden sm:inline">CSV</span>
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="sm" onClick={onExportCSV}>
+              <FileDown className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline text-xs">CSV</span>
             </Button>
-            <Button variant="secondary" size="sm" onClick={onExportPDF}>
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">PDF</span>
+            <Button variant="ghost" size="sm" onClick={onExportPDF}>
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline text-xs">PDF</span>
             </Button>
           </div>
         }
       />
 
       {transactions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="rounded-full bg-zinc-100 p-4 dark:bg-zinc-800">
-            <ReceiptIcon className="h-8 w-8 text-zinc-400" />
-          </div>
-          <p className="mt-4 text-sm font-medium text-zinc-500">
-            Nenhuma transacao encontrada
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 text-5xl">📭</div>
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            Nenhuma transacao ainda
           </p>
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">
             Adicione seu primeiro gasto acima
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {transactions.map((t) => {
+        <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
+          {transactions.map((t, idx) => {
             const category = getCategoryById(t.categoryId);
             return (
               <div
                 key={t.id}
-                className="flex items-center justify-between rounded-xl border border-zinc-100 p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
+                className="group flex items-center justify-between rounded-xl p-3 transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 animate-fade-in"
+                style={{ animationDelay: `${idx * 0.03}s` }}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-transform duration-200 group-hover:scale-110"
                     style={{
                       backgroundColor: category
-                        ? `${category.color}20`
-                        : undefined,
+                        ? `${category.color}15`
+                        : "rgba(161,161,170,0.1)",
                     }}
                   >
                     {getCategoryEmoji(category?.icon, category?.name || t.description)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
                       {t.description}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {category && (
                         <span
-                          className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                           style={{
-                            backgroundColor: `${category.color}15`,
+                            backgroundColor: `${category.color}12`,
                             color: category.color,
                           }}
                         >
                           {category.name}
                         </span>
                       )}
-                      <span className="text-xs text-zinc-400">
+                      <span className="text-[11px] text-zinc-400 dark:text-zinc-600">
                         {formatDate(t.createdAt)}
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {formatCurrency(Number(t.amount))}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                    -{formatCurrency(Number(t.amount))}
                   </span>
                   <button
                     onClick={() => onDelete(t.id)}
-                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
+                    className="rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:text-zinc-600 dark:hover:bg-red-950 dark:hover:text-red-400"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -117,24 +116,5 @@ export function TransactionList({
         </div>
       )}
     </Card>
-  );
-}
-
-function ReceiptIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
-      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-      <path d="M12 17.5v-11" />
-    </svg>
   );
 }

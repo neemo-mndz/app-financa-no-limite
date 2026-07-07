@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Plus } from "lucide-react";
+import { Zap } from "lucide-react";
 import type { Category } from "@/db/schema";
 
 interface TransactionFormProps {
@@ -37,10 +37,10 @@ export function TransactionForm({
     const newErrors: Record<string, string> = {};
 
     if (!description.trim()) {
-      newErrors.description = "Descrição é obrigatória";
+      newErrors.description = "Obrigatorio";
     }
     if (!amount || Number(amount) <= 0) {
-      newErrors.amount = "Valor deve ser positivo";
+      newErrors.amount = "Valor invalido";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -63,47 +63,57 @@ export function TransactionForm({
   };
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="rounded-lg bg-indigo-100 p-1.5 dark:bg-indigo-900/30">
-            <Plus className="h-4 w-4 text-indigo-600" />
+    <Card className="animate-fade-in stagger-2">
+      <form onSubmit={handleSubmit}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary shadow-sm shadow-indigo-500/20">
+            <Zap className="h-4 w-4 text-white" />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
-            Novo Gasto
-          </h3>
+          <div>
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+              Adicionar gasto
+            </h3>
+            <p className="text-xs text-zinc-400">Input rapido</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Input
-            placeholder="Descrição do gasto"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            error={errors.description}
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Input
-            type="number"
-            placeholder="0,00"
-            step="0.01"
-            min="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            error={errors.amount}
-          />
-          <Select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            placeholder="Categoria (opcional)"
-            options={categories.map((c) => ({
-              value: c.id,
-              label: c.name,
-            }))}
-          />
-          <Button type="submit" className="w-full">
-            <Plus className="h-4 w-4" />
-            Adicionar
-          </Button>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
+          <div className="sm:col-span-4">
+            <Input
+              placeholder="O que voce gastou?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              error={errors.description}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Input
+              type="number"
+              placeholder="R$ 0,00"
+              step="0.01"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              error={errors.amount}
+            />
+          </div>
+          <div className="sm:col-span-3">
+            <Select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              placeholder="Categoria"
+              options={categories.map((c) => ({
+                value: c.id,
+                label: c.name,
+              }))}
+            />
+          </div>
+          <div className="sm:col-span-3">
+            <Button type="submit" variant="gradient" className="w-full h-11">
+              <Zap className="h-4 w-4" />
+              Adicionar
+            </Button>
+          </div>
         </div>
       </form>
     </Card>

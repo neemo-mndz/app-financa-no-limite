@@ -21,11 +21,10 @@ export default function SignupPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("As senhas não coincidem");
+      setError("As senhas nao coincidem");
       setLoading(false);
       return;
     }
-
     if (password.length < 6) {
       setError("A senha deve ter pelo menos 6 caracteres");
       setLoading(false);
@@ -38,80 +37,83 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Erro ao criar conta");
         setLoading(false);
         return;
       }
-
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Erro de conexão");
+      setError("Erro de conexao");
       setLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-      <div className="w-full max-w-sm">
+      <div className="fixed inset-0 gradient-mesh pointer-events-none" />
+
+      <div className="relative w-full max-w-sm animate-slide-up">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600">
-            <Wallet className="h-6 w-6 text-white" />
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary shadow-lg shadow-indigo-500/30">
+            <Wallet className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            Criar Conta
+            Criar conta
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
-            Comece a controlar suas finanças
+            Comece a controlar suas financas agora
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-4">
-          <Input
-            label="E-mail"
-            type="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Senha"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Input
-            label="Confirmar Senha"
-            type="password"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
+        <div className="rounded-2xl border border-zinc-200/60 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <Input
+              label="E-mail"
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Input
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Input
+              label="Confirmar senha"
+              type="password"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
 
-          {error && (
-            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
-              {error}
-            </p>
-          )}
+            {error && (
+              <div className="rounded-xl bg-red-50 p-3 dark:bg-red-950/50">
+                <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                  {error}
+                </p>
+              </div>
+            )}
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Criando..." : "Criar Conta"}
-          </Button>
-        </form>
+            <Button type="submit" disabled={loading} variant="gradient" className="w-full">
+              {loading ? "Criando..." : "Criar conta"}
+            </Button>
+          </form>
+        </div>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          Já tem conta?{" "}
+          Ja tem conta?{" "}
           <Link
             href="/auth/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
+            className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
           >
             Entrar
           </Link>
